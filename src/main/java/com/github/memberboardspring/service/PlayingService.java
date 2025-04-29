@@ -146,6 +146,22 @@ public class PlayingService {
     public void printPostList(){
         List<Post> postList = postRepository.findAll();
         postListPrinter(postList);
+
+    }
+
+    private void postDtoListPrinter(List<PostListDto> myLikePostList) {
+        myLikePostList.forEach(post->{
+            String title = post.getTitle().length()<=10?
+                    post.getTitle() :
+                    post.getTitle().substring(0, 10) + "...";
+            System.out.println("----------------------------------------------------------------------------------------------");
+            System.out.printf("게시글 번호 : %d\t\t제목 : %s\t\t작성자 : %s\t\t작성일자 : %s\n",
+                    post.getPostId(),
+                    title,
+                    post.getWriter(),
+                    post.getCreatedAt());
+        });
+        System.out.println("----------------------------------------------------------------------------------------------");
     }
     private void postListPrinter(List<Post> postList) {
         postList.forEach(post -> {
@@ -274,7 +290,6 @@ public class PlayingService {
     public void deletePostBy(long postId) {
         postRepository.deleteById(postId);
     }
-//TODO: 
     @Transactional(readOnly = true)
     public void findMyPostAndPrintByMyLike(long userPk) {
         List<PostListDto> myLikePostList = postRepository.findPostByMyLike(userPk);
@@ -283,6 +298,7 @@ public class PlayingService {
             return;
         }
         System.out.println(">> 내가 좋아요 누른 게시물 목록 <<");
-//        postListPrinter(myLikePostList);
+        postDtoListPrinter(myLikePostList);
     }
+
 }
