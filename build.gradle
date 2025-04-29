@@ -1,0 +1,76 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.4.4'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.github'
+version = '0.0.1-SNAPSHOT'
+def mapStructVersion = "1.6.3"
+def queryDslVersion = "6.10.1"
+def generatedDir = "./src/main/generated"
+def buildDir = "./building"
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+configurations {
+    querydsl.extendsFrom compileClasspath
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    // validation
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    //lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    //Mapstruct
+    implementation "org.mapstruct:mapstruct:${mapStructVersion}"
+    annotationProcessor "org.mapstruct:mapstruct-processor:${mapStructVersion}"
+
+    //env-hide 야믈에 쓴 비번 가져올수있음
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+    //oracle
+    implementation 'com.oracle.database.jdbc:ojdbc11:23.7.0.25.01'
+    //jwt
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5'
+    //jasypt
+    implementation 'com.github.ulisesbocchio:jasypt-spring-boot-starter:3.0.5'
+    //redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    //email_verification
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+    //QueryDsl
+    implementation "io.github.openfeign.querydsl:querydsl-jpa:${queryDslVersion}"
+    annotationProcessor "io.github.openfeign.querydsl:querydsl-apt:${queryDslVersion}:jpa"
+    //swagger
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
+
+//    //오라클 버전 호환때문에 커뮤니티버전 다이렉트 추가
+//    implementation 'org.hibernate.orm:hibernate-core:7.0.0.Beta5'
+//    implementation 'org.hibernate.orm:hibernate-community-dialects:7.0.0.Beta5'
+//    implementation 'jakarta.persistence:jakarta.persistence-api:3.1.0'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+sourceSets {
+    main.java.srcDirs += [generatedDir+"/queryDsl"]
+}
+clean {
+    delete file(buildDir), file(generatedDir)
+
+}

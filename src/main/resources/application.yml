@@ -1,0 +1,49 @@
+
+jasypt:
+  encryptor:
+    password: ${JASYPT_PASSWORD}
+jwtpassword:
+  source: ENC(foTHOXMs3+XPmFWjU982ZSZl/HmV971ViWri+mqf/+s/EQ8cCb/0uNoIMOnIv52H/BI8X4+EIQojuAeuXCXB/7gzCKMj8Z6dOpR9asKKEOY=)
+spring:
+  server-url:
+    base: http://localhost:8080
+  mvc:
+    path match:
+      matching-strategy: ant_path_matcher #????????? ???? ???? ???
+  jpa:
+    open-in-view: false
+    show-sql: true
+  datasource:
+    username: ENC(aUXx2C4dSuUBEqPpgDrnq4TxXFVIJ3s2)
+    password: ENC(mA9yz2FZnjFnLVnGb4uG8g==)
+    driver-class-name: oracle.jdbc.OracleDriver
+    url: jdbc:oracle:thin:@localhost:1521:xe
+    hikari:
+      max-lifetime: 177000 # 177? RDS wait_timeout 180? ?? ?? ??
+#  data:
+#    redis:
+#      host: ENC(2KttGDhIqstDjAAlx8vBaqFuBHJdodRA)
+#      port: 6379
+#      password: ENC(fuN37Be6K3qdIEggPy++iwek4+8xRtaT)
+#      timeout: 3000
+#  mail:
+#    host: smtp.gmail.com
+#    port: 587
+#    username: ENC(tZCNtUD39C1X4xxr3+oP0HZ0q95nukRsjUP0oqK3jOw=)
+#    password: ENC(yymAj4wB0P5Hy3w4p5kBeV7dImkHJWaYqBtHPX2C3EI=)
+#    properties:
+#      mail:
+#        smtp:
+#          auth: true
+#          timeout: 5000
+#          starttls:
+#            enable: true
+#              Identity Manager ??? SSL? ???? SMTP? ????? ?????.
+
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /board-docs.html
+  version: 1.0.0
