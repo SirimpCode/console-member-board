@@ -2,10 +2,7 @@ package com.github.memberboardspring.web.controller;
 
 import com.github.memberboardspring.repository.account.MyMember;
 import com.github.memberboardspring.service.PlayingService;
-import com.github.memberboardspring.web.dto.FilterMyPostDto;
-import com.github.memberboardspring.web.dto.LoginRequest;
-import com.github.memberboardspring.web.dto.PostRequestDto;
-import com.github.memberboardspring.web.dto.PostResponse;
+import com.github.memberboardspring.web.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -166,7 +163,10 @@ public class PlayingController {
                 }
                 case "5" -> {
                     System.out.println(">> 게시물 목록 보기 <<");
-                    playingService.printPostList();
+                    SearchSortingStandard sort = createSearchSort();
+                    boolean isDescending = yOrNo("내림차순으로 보시겠습니까?");
+                    sort.setDescending(isDescending);
+                    playingService.printPostList(sort);
                     nextMenu();
                 }
                 case "6" -> {
@@ -251,6 +251,34 @@ public class PlayingController {
                 default -> System.out.println(">> 잘못된 메뉴입니다. <<");
             }
         }
+    }
+
+    private SearchSortingStandard createSearchSort() {
+        System.out.println(">> 보여질 목록의 정렬기준을 선택해 주세요. <<");
+        System.out.println("1.최신순\t\t2.조회수순\t\t3.좋아요순\t\t4.제목순\t\t5.댓글순");
+        while(true){
+            String menu = scanner.nextLine().strip();
+            switch (menu) {
+                case "1" -> {
+                    return SearchSortingStandard.LATEST;
+                }
+                case "2" -> {
+                    return SearchSortingStandard.VIEWS;
+                }
+                case "3" -> {
+                    return SearchSortingStandard.LIKES;
+                }
+                case "4" -> {
+                    return SearchSortingStandard.TITLE;
+                }
+                case "5" -> {
+                    return SearchSortingStandard.COMMENTS;
+                }
+                default -> System.out.println(">> 잘못된 메뉴입니다. <<");
+            }
+
+        }
+
     }
 
     private PostRequestDto createPostDto() {

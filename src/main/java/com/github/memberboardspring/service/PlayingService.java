@@ -143,9 +143,9 @@ public class PlayingService {
         return postRepository.existsById(number);
     }
     @Transactional(readOnly = true)
-    public void printPostList(){
-        List<Post> postList = postRepository.findAll();
-        postListPrinter(postList);
+    public void printPostList(SearchSortingStandard sort){
+        List<PostListDto> postDtoList = postRepository.findAllBySort(sort);
+        postDtoListPrinter(postDtoList);
 
     }
 
@@ -155,10 +155,13 @@ public class PlayingService {
                     post.getTitle() :
                     post.getTitle().substring(0, 10) + "...";
             System.out.println("----------------------------------------------------------------------------------------------");
-            System.out.printf("게시글 번호 : %d\t\t제목 : %s\t\t작성자 : %s\t\t작성일자 : %s\n",
+            System.out.printf("게시글번호:%d\t제목:%s\t작성자:%s\t조회수:%s\t좋아요수:%s\t댓글수:%s\t작성일자:%s\n",
                     post.getPostId(),
                     title,
                     post.getWriter(),
+                    post.getViewCount(),
+                    post.getLikeCount(),
+                    post.getCommentCount(),
                     post.getCreatedAt());
         });
         System.out.println("----------------------------------------------------------------------------------------------");

@@ -6,11 +6,15 @@ import com.github.memberboardspring.repository.like.QMyLike;
 import com.github.memberboardspring.web.dto.CommentResponse;
 import com.github.memberboardspring.web.dto.PostListDto;
 import com.github.memberboardspring.web.dto.PostResponse;
+import com.github.memberboardspring.web.dto.SearchSortingStandard;
 import com.querydsl.core.group.GroupBy;
 import com.querydsl.core.types.ExpressionUtils;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.JPQLSubQuery;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
@@ -23,7 +27,8 @@ import static com.querydsl.core.group.GroupBy.groupBy;
 @RequiredArgsConstructor
 public class PostQueryImpl implements PostQuery {
     private final JPAQueryFactory queryFactory;
-//    private JPQLSubQuery<Long> getLikeCountSubQuery(){
+
+    //    private JPQLSubQuery<Long> getLikeCountSubQuery(){
 //        return JPAExpressions.select(QMyLike.myLike.count())
 //                .from(QMyLike.myLike);
 //    }
@@ -57,6 +62,7 @@ public class PostQueryImpl implements PostQuery {
                 .on(QMyComment.myComment.post.eq(QPost.post)) // 조인 조건 수정
                 .leftJoin(QMyComment.myComment.myUser, QMyMember.myMember)
                 .where(QPost.post.postId.eq(postId))
+                .orderBy(QMyComment.myComment.createdAt.asc())
                 .groupBy(
                         QPost.post.postId,
                         QPost.post.contents,
@@ -67,7 +73,7 @@ public class PostQueryImpl implements PostQuery {
                         QPost.post.myMember.myMemberId,
                         QMyComment.myComment.myCommentId, QMyComment.myComment.contents,
                         QMyComment.myComment.createdAt, QMyComment.myComment.myUser.name
-                        )
+                )
                 .orderBy(QPost.post.createdAt.desc())
                 .transform(
                         GroupBy.groupBy(QPost.post.postId)
@@ -105,12 +111,12 @@ public class PostQueryImpl implements PostQuery {
     @Override
     public Optional<PostResponse> findByIdJoinWriter(long postId) {
         PostResponse searchPost = queryFactory.select(
-                Projections.fields(PostResponse.class,
-                        QPost.post.postId,
-                        QPost.post.contents,
-                        QPost.post.title,
-                        QPost.post.createdAt,
-                        QPost.post.myMember.name.as("writer")
+                        Projections.fields(PostResponse.class,
+                                QPost.post.postId,
+                                QPost.post.contents,
+                                QPost.post.title,
+                                QPost.post.createdAt,
+                                QPost.post.myMember.name.as("writer")
                         )
                 )
                 .from(QPost.post)
@@ -128,7 +134,8 @@ public class PostQueryImpl implements PostQuery {
                 .where(QPost.post.postId.eq(postId))
                 .execute();
     }
-    private void createPostListQuery(){
+
+    private void createPostListQuery() {
         queryFactory.select(
                         Projections.fields(PostListDto.class,
                                 QPost.post.postId,
@@ -155,23 +162,9 @@ public class PostQueryImpl implements PostQuery {
 
     @Override
     public List<PostListDto> findPostByMyLike(long userPk) {
-        // 게시글에 대한 좋아요 집계를 위한 alias
-        QMyLike postLike = new QMyLike("postLike");
         // 사용자가 누른 좋아요 필터링을 위한 alias
         QMyLike userLike = new QMyLike("userLike");
-        return queryFactory.select(
-                Projections.fields(PostListDto.class,
-                        QPost.post.postId,
-                        QPost.post.title,
-                        QPost.post.createdAt,
-                        QPost.post.viewCount,
-                        QPost.post.myMember.name.as("writer"),
-                        postLike.countDistinct().as("likeCount"),
-                        QMyComment.myComment.countDistinct().as("commentCount")
-                        ))
-                .from(QPost.post)
-                .leftJoin(postLike)
-                .on(postLike.myLikePk.post.eq(QPost.post)) // 게시물의 좋아요 개수를 찾기위한 조인
+        return madePostListQuery()
                 .join(userLike)
                 .on(
                         userLike.myLikePk.post.eq(QPost.post)                                  // ← 게시글 매칭
@@ -187,5 +180,56 @@ public class PostQueryImpl implements PostQuery {
                         QPost.post.myMember.name
                 )
                 .fetch();
+    }
+    private JPAQuery<PostListDto> madePostListQuery(){
+        // 게시글에 대한 좋아요 집계를 위한 alias
+        QMyLike postLike = new QMyLike("postLike");
+        return queryFactory.select(
+                        Projections.fields(PostListDto.class,
+                                QPost.post.postId,
+                                QPost.post.title,
+                                QPost.post.createdAt,
+                                QPost.post.viewCount,
+                                QPost.post.myMember.name.as("writer"),
+                                postLike.countDistinct().as("likeCount"),
+                                QMyComment.myComment.countDistinct().as("commentCount")
+                        ))
+                .from(QPost.post)
+                .leftJoin(postLike)
+                .on(postLike.myLikePk.post.eq(QPost.post)); // 게시물의 좋아요 개수를 찾기위한 조인
+    }
+
+    @Override
+    public List<PostListDto> findAllBySort(SearchSortingStandard sort) {
+
+        OrderSpecifier<?> orderSpecifier = madeListSortExpression(sort);
+        return madePostListQuery()
+                .leftJoin(QMyComment.myComment)
+                .on(QMyComment.myComment.post.postId.eq(QPost.post.postId))
+                .groupBy(
+                        QPost.post.postId,
+                        QPost.post.title,
+                        QPost.post.createdAt,
+                        QPost.post.viewCount,
+                        QPost.post.myMember.name
+                )
+                .orderBy(orderSpecifier)
+                .fetch();
+    }
+
+    private OrderSpecifier<?> madeListSortExpression(SearchSortingStandard sort) {
+        QMyLike postLike = new QMyLike("postLike");
+        return switch (sort) {
+            case LATEST -> sort.isDescending() ?
+                    QPost.post.createdAt.desc() : QPost.post.createdAt.asc();
+            case COMMENTS -> sort.isDescending() ?
+                    QMyComment.myComment.countDistinct().desc() : QMyComment.myComment.countDistinct().asc();
+            case VIEWS -> sort.isDescending() ?
+                    QPost.post.viewCount.desc() : QPost.post.viewCount.asc();
+            case LIKES -> sort.isDescending() ?
+                    postLike.countDistinct().desc() : postLike.countDistinct().asc();
+            case TITLE -> sort.isDescending() ?
+                    QPost.post.title.desc() : QPost.post.title.asc();
+        };
     }
 }
